@@ -9,22 +9,29 @@ llm = ChatGroq(
     temperature=0
 )
 
+MAX_RETRIES = 2
+
 def critic_node(state: AgentState) -> AgentState:
     tasks = state["tasks"]
-    index = state["current_task_index"] - 1  # just executed task
+    index = state["current_task_index"] - 1
     task = tasks[index]
 
-    print(f"\n🔎 CRITIC: Evaluating task {task['id']}...")
+    retry_count = task.get("retry_count", 0)
+
+    print(f"\n🔎 CRITIC: Evaluating task {task['id']} (attempt {retry_count + 1})...")
+
+    # force accept if we've retried too many times
+    if retry_count >= MAX_RETRIES:
+        print(f"⚠️  CRITIC: Max retries reached for task {task['id']}, accepting best result.")
+        tasks[index] = {**task, "status": "done"}
+        return {**state, "tasks": tasks}
 
     prompt = f"""You are a research quality critic.
 
 Original task: {task['description']}
 Result obtained: {task['result']}
 
-Score the result from 1-5 based on:
-- Relevance to the task
-- Information quality
-- Completeness
+Score the result from 1-5 based on relevance, quality, and completeness.
 
 Respond ONLY with a JSON object, nothing else:
 {{"score": <1-5>, "reason": "<one sentence>", "verdict": "accept" or "retry"}}
@@ -47,14 +54,18 @@ If score >= 3, verdict must be "accept". If score < 3, verdict must be "retry".
     print(f"   Score: {score}/5 | Verdict: {verdict}")
     print(f"   Reason: {reason}")
 
-    # if retry, mark task as pending again and go back
     if verdict == "retry":
         print(f"⚠️  CRITIC: Retrying task {task['id']}...")
-        tasks[index] = {**task, "status": "pending", "result": None}
+        tasks[index] = {
+            **task,
+            "status": "pending",
+            "result": None,
+            "retry_count": retry_count + 1
+        }
         return {
             **state,
             "tasks": tasks,
-            "current_task_index": index  # go back to this task
+            "current_task_index": index
         }
 
     tasks[index] = {**task, "status": "done"}
