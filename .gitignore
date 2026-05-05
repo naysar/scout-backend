@@ -1,0 +1,14 @@
+from typing import TypedDict, List, Optional
+
+class Task(TypedDict):
+    id: int
+    description: str
+    status: str  # "pending" | "in_progress" | "done" | "failed"
+    result: Optional[str]
+
+class AgentState(TypedDict):
+    goal: str                  # the original research goal
+    tasks: List[Task]          # the plan broken into steps
+    current_task_index: int    # which task we're on
+    scratchpad: List[str]      # running log of findings
+    final_report: Optional[str]
