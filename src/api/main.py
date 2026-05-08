@@ -13,11 +13,15 @@ from src.agent.state import AgentState
 
 app = FastAPI()
 
+from src.auth.routes import router as auth_router
+app.include_router(auth_router)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 tasks = {}
