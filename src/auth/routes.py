@@ -69,7 +69,7 @@ def login(req: LoginRequest, response: Response, request: Request, db: Session =
     db.commit()
     response.set_cookie("access_token", access_token, httponly=True, samesite="lax", max_age=1800)
     response.set_cookie("refresh_token", refresh_token, httponly=True, samesite="lax", max_age=604800)
-    return {"message": "Logged in.", "name": user.name, "email": user.email}
+    return {"message": "Logged in.", "name": user.name, "email": user.email, "access_token": access_token}
 
 @router.post("/refresh")
 def refresh(request: Request, response: Response, db: Session = Depends(get_db)):
@@ -103,6 +103,10 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
 @router.get("/me")
 def me(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated.")
     payload = decode_token(token)
