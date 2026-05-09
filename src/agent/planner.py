@@ -11,8 +11,12 @@ llm = ChatGroq(
 
 def planner_node(state: AgentState) -> AgentState:
     print("\n🧠 PLANNER: Breaking down goal into tasks...")
+    
+    from src.agent.memory import recall_memory
+    past = recall_memory(state["goal"])
+    memory_context = f"\n\nRelated past research:\n{past}" if past else ""
 
-    prompt = f"""You are a research planning assistant.
+    prompt = f"""You are a research planning assistant.{memory_context}
 
 Break down this research goal into 4-6 concrete sub-tasks:
 Goal: {state["goal"]}
