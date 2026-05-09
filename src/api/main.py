@@ -54,10 +54,10 @@ async def run_in_background(task_id: str, goal: str):
         tasks[task_id]["status"] = "done"
         log("Research complete!")
     except Exception as e:
-    import traceback
-    tasks[task_id]["status"] = "failed"
-    log(f"Error: {str(e)}")
-    log(f"Details: {traceback.format_exc()}")
+        import traceback
+        tasks[task_id]["status"] = "failed"
+        log(f"Error: {str(e)}")
+        log(f"Details: {traceback.format_exc()}")
 
 @app.get("/stream/{task_id}")
 async def stream(task_id: str):
